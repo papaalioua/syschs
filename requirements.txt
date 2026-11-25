@@ -1,0 +1,7 @@
+Flask>=3.0
+Flask-SQLAlchemy>=3.1
+PyMySQL>=1.1
+cryptography>=42.0
+python-barcode>=0.15
+APScheduler>=3.10
+requests>=2.31

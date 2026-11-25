@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
+{% block title %}Consultation {{ c.patient.full_name }}{% endblock %}
+{% block crumbs %}<a href="{{ url_for('doctor.index') }}">Consultations</a> {{ ui.icon('chevron') }} <strong>{{ c.patient.full_name }}</strong>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="patient-banner">
+    <span class="avatar lg">{{ c.patient.full_name|initials }}</span>
+    <div>
+      <h1>{{ c.patient.full_name }}</h1>
+      <div class="ids">
+        <span class="tag">{{ ui.icon('card') }} CNSS <span class="mono">{{ c.patient.cnss_number }}</span></span>
+        <span class="tag">{{ ui.icon('scan') }} <span class="mono">{{ c.dossier.barcode }}</span></span>
+        <span class="tag">{{ ui.icon('history') }} {{ history|length }} visite(s) antérieure(s)</span>
+      </div>
+    </div>
+    <div class="right"><span class="badge {{ c.status|status_class }}">{{ c.status|status_label }}</span></div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <div class="card-head"><span class="hico">{{ ui.icon('clipboard') }}</span><h2>Saisie de l'infirmier</h2><span class="sub">{{ c.nurse_at|dt }}</span></div>
+    <div class="card-body">
+      <h3>Ordonnance</h3>
+      <div class="note">{{ c.prescription_details }}</div>
+      {% if c.nurse_notes %}<h3>Notes</h3><div class="note">{{ c.nurse_notes }}</div>{% endif %}
+      <p class="muted small">Par {{ c.nurse.full_name if c.nurse else '—' }}</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span class="hico">{{ ui.icon('history') }}</span><h2>Historique médical</h2></div>
+    <div class="card-body">
+      {% if history %}
+      <ul class="timeline">
+        {% for h in history %}
+        <li>
+          <div class="when">{{ h.closed_at|dt }} · {{ h.doctor.full_name if h.doctor else '' }}</div>
+          <b>Diagnostic : {{ h.diagnosis }}</b>
+          <div class="muted small">{{ 'Chirurgie programmée' if h.decision == 'chirurgie' else 'Médicaments : ' ~ h.medication }}</div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}{{ ui.empty('history', 'Première consultation enregistrée.') }}{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="hico">{{ ui.icon('stethoscope') }}</span><h2>Diagnostic et décision</h2></div>
+  <div class="card-body">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="diagnosis">Diagnostic</label>
+      <textarea id="diagnosis" name="diagnosis" required>{{ request.form.get('diagnosis', '') }}</textarea>
+
+      {% set decision = request.form.get('decision', '') %}
+      <label>Décision</label>
+      <div class="choices">
+        <label class="choice"><input type="radio" name="decision" value="medicament" {{ 'checked' if decision != 'chirurgie' }}>
+          <span class="cico">{{ ui.icon('pill') }}</span><span><b>Traitement médicamenteux</b><span>Nouvelle ordonnance remise au patient</span></span></label>
+        <label class="choice"><input type="radio" name="decision" value="chirurgie" {{ 'checked' if decision == 'chirurgie' }}>
+          <span class="cico">{{ ui.icon('scissors') }}</span><span><b>Intervention chirurgicale</b><span>Chambre et créneau attribués automatiquement</span></span></label>
+      </div>
+
+      <div id="med">
+        <label for="medication">Nouvelle ordonnance</label>
+        <textarea id="medication" name="medication">{{ request.form.get('medication', '') }}</textarea>
+      </div>
+      <div id="surg" hidden>
+        <label for="surgery_label">Intervention</label>
+        <input type="text" id="surgery_label" name="surgery_label" value="{{ request.form.get('surgery_label', '') }}" placeholder="ex. Appendicectomie">
+        <p class="hint">{{ ui.icon('info', 'sm') }} SysCHS réserve la première chambre libre au premier créneau disponible (dès demain, 08:00–18:00).</p>
+      </div>
+      <button type="submit">{{ ui.icon('printer') }} Valider et imprimer le document patient</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  (function () {
+    var radios = document.querySelectorAll('input[name=decision]');
+    function sync() {
+      var surg = document.querySelector('input[name=decision]:checked').value === 'chirurgie';
+      document.getElementById('surg').hidden = !surg;
+      document.getElementById('med').hidden = surg;
+      radios.forEach(function (r) { r.closest('.choice').classList.toggle('checked', r.checked); });
+    }
+    radios.forEach(function (r) { r.addEventListener('change', sync); });
+    sync();
+  })();
+</script>
+{% endblock %}

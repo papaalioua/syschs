@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
+{% block title %}Localiser un patient{% endblock %}
+{% block crumbs %}Réception {{ ui.icon('chevron') }} <strong>Localiser un patient</strong>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ ui.icon('search', 'sm') }} Réception</div>
+    <h1>Localiser un patient</h1>
+    <p>Retrouvez un patient et la chambre de son intervention pour orienter sa famille.</p>
+  </div>
+</div>
+<div class="card">
+  <div class="card-body">
+    <form method="get">
+      <label for="q" class="sr-only">Nom, prénom, N° CNSS ou code-barres du dossier</label>
+      <div class="scan">
+        {{ ui.icon('search') }}
+        <input type="search" id="q" name="q" value="{{ q }}" autofocus placeholder="Nom, prénom, N° CNSS ou code-barres du dossier" style="font-family:var(--font);letter-spacing:0;font-size:1rem">
+        <button type="submit">Rechercher</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% if q %}
+<div class="card">
+  <div class="card-head"><span class="hico">{{ ui.icon('users') }}</span><h2>Résultats</h2><span class="sub">{{ results|length }} pour « {{ q }} »</span></div>
+  <div class="card-body flush">
+  {% if results %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>Patient</th><th>N° CNSS</th><th class="hide-sm">Dossier</th><th>Chambre / créneau</th></tr></thead>
+    <tbody>
+    {% for p, s in results %}
+    <tr>
+      <td>{{ ui.person(p.full_name, p.phone) }}</td>
+      <td class="mono">{{ p.cnss_number }}</td>
+      <td class="hide-sm mono">{{ p.dossier.barcode if p.dossier else '—' }}</td>
+      <td>{% if s %}
+            <div class="slot" style="padding:0;border:0">
+              <div class="room"><small>CH.</small><b>{{ s.room.number }}</b></div>
+              <div class="grow"><b>Chambre {{ s.room.number }}</b><small>{{ s.start|dt }} – {{ s.end.strftime('%H:%M') }} · {{ s.label }}</small></div>
+            </div>
+          {% else %}<span class="muted">Aucune intervention programmée</span>{% endif %}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}{{ ui.empty('search', 'Aucun résultat', 'Vérifiez l\'orthographe ou scannez le code-barres du dossier.') }}{% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

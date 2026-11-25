@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
+{% block title %}Étiquettes{% endblock %}
+{% block crumbs %}<a href="{{ url_for('reception.index') }}">Réception</a> {{ ui.icon('chevron') }} <strong>Étiquettes code-barres</strong>{% endblock %}
+{% block content %}
+<div class="page-head no-print">
+  <div>
+    <div class="eyebrow">{{ ui.icon('printer', 'sm') }} Phase 1 · Étape 3 sur 3</div>
+    <h1>Étiquettes code-barres</h1>
+    <p>Patient : <strong>{{ patient.full_name }}</strong>. Imprimez les deux étiquettes puis collez-les sur la chemise et au dos de la carte CNSS.</p>
+  </div>
+  <div class="actions">
+    <button type="button" onclick="window.print()">{{ ui.icon('printer') }} Imprimer</button>
+    <a class="btn secondary" href="{{ url_for('reception.index') }}">Patient suivant {{ ui.icon('arrow-right') }}</a>
+  </div>
+</div>
+
+<div class="flash ok no-print">{{ ui.icon('check') }}<span>Inscription enregistrée : le patient est transmis à l'infirmerie.</span></div>
+
+<div class="labels">
+  <div class="label-box">
+    <div class="lh"><svg aria-hidden="true"><use href="{{ url_for('static', filename='icons.svg') }}#i-logo"></use></svg> Dossier médical <span>CH Sahloul</span></div>
+    <div class="lb">
+      {{ folder_svg|safe }}
+      <div class="lname">{{ patient.full_name }}</div>
+      <div class="lsub">Chemise · {{ consultation.created_at|dt }}</div>
+    </div>
+  </div>
+  <div class="label-box">
+    <div class="lh"><svg aria-hidden="true"><use href="{{ url_for('static', filename='icons.svg') }}#i-logo"></use></svg> Dos de la carte CNSS <span>CH Sahloul</span></div>
+    <div class="lb">
+      {{ card_svg|safe }}
+      <div class="lname">{{ patient.full_name }}</div>
+      <div class="lsub">Carte CNSS · {{ patient.cnss_number }}</div>
+    </div>
+  </div>
+</div>
+{% endblock %}

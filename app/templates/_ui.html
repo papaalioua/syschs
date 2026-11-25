@@ -1,0 +1,34 @@
+{# Composants d'interface réutilisables #}
+{% macro icon(name, cls='') -%}
+<svg class="ico {{ cls }}" aria-hidden="true"><use href="{{ url_for('static', filename='icons.svg') }}#i-{{ name }}"></use></svg>
+{%- endmacro %}
+
+{% macro journey(active) -%}
+{% set steps = [
+  ('reception', 'card', 'Réception', 'Validation CNSS', None),
+  ('nurse', 'clipboard', 'Infirmerie', 'Saisie ordonnance', flow.registered),
+  ('doctor', 'stethoscope', 'Médecin', 'Diagnostic & décision', flow.ready),
+  ('admin', 'receipt', 'SysBill', 'Facturation CNSS', flow.unbilled),
+] %}
+<div class="journey" aria-label="Circuit du patient">
+  {% for key, ico, title, sub, count in steps %}
+  <div class="step {{ 'on' if key == active }}">
+    <div class="n">{{ icon(ico, 'sm') }}</div>
+    <div><b>{{ loop.index }}. {{ title }}</b><span>{{ sub }}</span></div>
+    {% if count is not none %}<span class="q" title="Dossiers en attente à cette étape">{{ count }}</span>{% endif %}
+  </div>
+  {% endfor %}
+</div>
+{%- endmacro %}
+
+{% macro person(name, sub='') -%}
+<div class="person"><span class="avatar">{{ name|initials }}</span><div><b>{{ name }}</b>{% if sub %}<small>{{ sub }}</small>{% endif %}</div></div>
+{%- endmacro %}
+
+{% macro empty(ico, title, text='') -%}
+<div class="empty"><div class="eico">{{ icon(ico, 'lg') }}</div><b>{{ title }}</b>{% if text %}<span class="small">{{ text }}</span>{% endif %}</div>
+{%- endmacro %}
+
+{% macro kpi(ico, value, label, tone='', unit='') -%}
+<div class="kpi"><div class="kico {{ tone }}">{{ icon(ico, 'lg') }}</div><div><div class="val">{{ value }}{% if unit %}<small>{{ unit }}</small>{% endif %}</div><div class="lbl">{{ label }}</div></div></div>
+{%- endmacro %}

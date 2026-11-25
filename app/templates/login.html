@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
+{% block title %}Connexion{% endblock %}
+{% block body %}
+<div class="auth-page">
+  <section class="auth-hero">
+    <a class="logo" href="{{ url_for('home') }}">
+      <svg aria-hidden="true"><use href="{{ url_for('static', filename='icons.svg') }}#i-logo"></use></svg>
+      <span><b>SysCHS</b><small>Centre Hospitalier de Sahloul</small></span>
+    </a>
+    <h1>Le dossier patient, <em>de l'accueil à la facturation CNSS.</em></h1>
+    <p>Un seul circuit numérique pour la réception, l'infirmerie, les médecins et l'administration :
+       chaque dossier est identifié par code-barres et suit le patient à chaque étape.</p>
+    <svg class="ecg" viewBox="0 0 600 70" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 42 H140 l10 -6 l10 6 H210 l6 -30 l9 56 l9 -44 l6 18 H330 l14 -10 l14 10 H460 l6 -30 l9 56 l9 -44 l6 18 H600" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>
+    <div class="hero-steps">
+      <div>{{ ui.icon('card') }}<b>Réception</b>Carte CNSS validée</div>
+      <div>{{ ui.icon('clipboard') }}<b>Infirmerie</b>Ordonnance saisie</div>
+      <div>{{ ui.icon('stethoscope') }}<b>Médecin</b>Diagnostic, bloc auto</div>
+      <div>{{ ui.icon('receipt') }}<b>SysBill</b>Facture hebdomadaire</div>
+    </div>
+    <div class="auth-foot">SysCHS · Projet d'intégration · Accès réservé au personnel autorisé</div>
+  </section>
+
+  <section class="auth-form">
+    <div class="box">
+      <h2>Connexion</h2>
+      <p>Identifiez-vous pour accéder à votre espace de travail.</p>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}" role="alert">{{ ui.icon('alert') }}<span>{{ message }}</span></div>
+        {% endfor %}
+      {% endwith %}
+      <form method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <label for="username">Identifiant</label>
+        <div class="input-ico">{{ ui.icon('user') }}<input type="text" id="username" name="username" autocomplete="username" autofocus required></div>
+        <label for="password">Mot de passe</label>
+        <div class="input-ico">{{ ui.icon('lock') }}<input type="password" id="password" name="password" autocomplete="current-password" required></div>
+        <button type="submit">Se connecter {{ ui.icon('arrow-right') }}</button>
+      </form>
+
+      {% if config.SHOW_DEMO_ACCOUNTS %}
+      <div class="demo-accounts">
+        <h3>Comptes de démonstration</h3>
+        <div class="list">
+          {% for u, label, ico in [('reception1', 'Réception', 'user-plus'), ('nurse1', 'Infirmier', 'clipboard'),
+                                   ('doctor1', 'Médecin', 'stethoscope'), ('admin', 'Facturation', 'receipt')] %}
+          <button type="button" data-user="{{ u }}">{{ ui.icon(ico) }}<span><b>{{ label }}</b><small>{{ u }}</small></span></button>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+<script>
+  document.querySelectorAll('[data-user]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      document.getElementById('username').value = b.dataset.user;
+      document.getElementById('password').value = 'demo1234';
+      document.querySelector('.auth-form form').submit();
+    });
+  });
+</script>
+{% endblock %}

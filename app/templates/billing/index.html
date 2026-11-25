@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
+{% block title %}Facturation CNSS{% endblock %}
+{% block crumbs %}Administration {{ ui.icon('chevron') }} <strong>Facturation CNSS</strong>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ ui.icon('receipt', 'sm') }} Phase 3 · SysBill</div>
+    <h1>SysBill : facturation CNSS</h1>
+    <p>Les actes terminés sont regroupés chaque semaine en une facture envoyée à la CNSS.</p>
+  </div>
+</div>
+
+{{ ui.journey('admin') }}
+
+<div class="kpis">
+  {{ ui.kpi('clipboard', pending, 'Actes en attente de facturation', 'wait') }}
+  {{ ui.kpi('wallet', kpi.pending_amount|money, 'Montant à facturer', 'ready', 'TND') }}
+  {{ ui.kpi('check', kpi.billed|money, 'Total facturé à la CNSS', 'done', 'TND') }}
+  {{ ui.kpi('alert' if kpi.failed else 'shield', kpi.failed, 'Factures en échec', 'err' if kpi.failed else '') }}
+</div>
+
+<div class="card">
+  <div class="card-body run-box">
+    <span class="hico" style="width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--brand-50);color:var(--brand)">{{ ui.icon('refresh', 'lg') }}</span>
+    <div>
+      <b>SysBill s'exécute automatiquement chaque semaine.</b>
+      <div class="muted small">
+        {% if kpi.next_run %}Prochaine exécution : {{ kpi.next_run|dt }} · {% endif %}
+        Tarifs : consultation {{ tariffs.consultation|money }} TND · chirurgie {{ tariffs.chirurgie|money }} TND.
+        Actes terminés en attente de facturation : <strong>{{ pending }}</strong>
+      </div>
+    </div>
+    <form method="post" action="{{ url_for('billing.run') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" {{ 'disabled' if not pending }}>{{ ui.icon('play') }} Lancer SysBill maintenant</button>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="hico">{{ ui.icon('receipt') }}</span><h2>Factures</h2><span class="sub">{{ bills|length }} au total</span></div>
+  <div class="card-body flush">
+  {% if bills %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>N°</th><th>Générée</th><th class="hide-sm">Période</th><th class="right">Actes</th><th class="right">Montant (TND)</th><th>Statut</th><th></th></tr></thead>
+    <tbody>
+    {% for b in bills %}
+    <tr>
+      <td class="mono"><b>#{{ '%04d'|format(b.id) }}</b></td>
+      <td>{{ b.created_at|dt }}</td>
+      <td class="hide-sm muted small">{{ b.period_start.strftime('%d/%m') }} → {{ b.period_end.strftime('%d/%m/%Y') }}</td>
+      <td class="right">{{ b.total_acts }}</td>
+      <td class="right mono">{{ b.total_amount|money }}</td>
+      <td><span class="badge {{ 'ok' if b.status == 'envoyee' else 'err' }}">{{ 'envoyée' if b.status == 'envoyee' else b.status }}</span></td>
+      <td class="right"><a class="btn sm secondary" href="{{ url_for('billing.detail', bill_id=b.id) }}">Détail</a></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}{{ ui.empty('receipt', 'Aucune facture.', 'La première facture sera générée à la prochaine exécution de SysBill.') }}{% endif %}
+  </div>
+</div>
+{% endblock %}

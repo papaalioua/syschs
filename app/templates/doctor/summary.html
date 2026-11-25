@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
+{% block title %}Document patient{% endblock %}
+{% block crumbs %}<a href="{{ url_for('doctor.index') }}">Consultations</a> {{ ui.icon('chevron') }} <strong>Document patient</strong>{% endblock %}
+{% block content %}
+<div class="actions no-print" style="margin:-1.1rem 0 1.2rem">
+  <button type="button" onclick="window.print()">{{ ui.icon('printer') }} Imprimer</button>
+  <a class="btn secondary" href="{{ url_for('doctor.index') }}">Patient suivant {{ ui.icon('arrow-right') }}</a>
+</div>
+<article class="print-doc">
+  <header class="letterhead">
+    <svg aria-hidden="true"><use href="{{ url_for('static', filename='icons.svg') }}#i-logo"></use></svg>
+    <div><b>Centre Hospitalier de Sahloul</b><small>Sousse · Système d'information SysCHS</small></div>
+    <div class="ref">Consultation n° {{ '%06d'|format(c.id) }}<br>{{ c.closed_at|dt }}</div>
+  </header>
+  <h1>Compte rendu de visite</h1>
+  <dl class="meta">
+    <dt>Patient</dt><dd>{{ c.patient.full_name }}</dd>
+    <dt>N° CNSS</dt><dd class="mono">{{ c.patient.cnss_number }}</dd>
+    <dt>Dossier</dt><dd class="mono">{{ c.dossier.barcode }}</dd>
+    <dt>Date</dt><dd>{{ c.closed_at|dt }}</dd>
+    <dt>Médecin</dt><dd>{{ c.doctor.full_name }}</dd>
+  </dl>
+  <h2>Diagnostic</h2>
+  <p>{{ c.diagnosis }}</p>
+  {% if c.decision == 'chirurgie' and c.surgery %}
+    <h2>Intervention programmée</h2>
+    <div class="callout">
+      <div class="big">Chambre {{ c.surgery.room.number }}</div>
+      <div><b>{{ c.surgery.label }}</b><br>le {{ c.surgery.start|dt }} (jusqu'à {{ c.surgery.end.strftime('%H:%M') }})</div>
+    </div>
+  {% else %}
+    <h2>Ordonnance</h2>
+    <p style="white-space: pre-line">{{ c.medication }}</p>
+  {% endif %}
+  <div class="sign"><div>Signature et cachet<br><b>{{ c.doctor.full_name }}</b></div></div>
+</article>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
+{% block title %}Carte rejetée{% endblock %}
+{% block crumbs %}<a href="{{ url_for('reception.index') }}">Réception</a> {{ ui.icon('chevron') }} <strong>Carte rejetée</strong>{% endblock %}
+{% block content %}
+<div class="card" style="max-width:640px">
+  <div class="card-body" style="padding:2rem">
+    <div class="empty" style="padding:0 0 1.2rem">
+      <div class="eico" style="background:var(--err-bg);color:var(--err)">{{ ui.icon('x', 'lg') }}</div>
+      <h1>Carte CNSS rejetée</h1>
+    </div>
+    <div class="flash error">{{ ui.icon('alert') }}<span>{{ result.get('error', 'Validation impossible') }}</span></div>
+    <dl class="meta" style="margin-bottom:1rem">
+      <dt>Numéro saisi</dt><dd class="mono">{{ card or '—' }}</dd>
+      <dt>Réponse CNSS</dt><dd>{{ result.get('status', '—') }}</dd>
+    </dl>
+    {% if result.status == 'unavailable' %}
+      <p>Le système CNSS est injoignable. Réessayez dans quelques instants.</p>
+    {% else %}
+      <p>L'inscription est interrompue. Demandez au patient de <strong>renouveler sa carte CNSS</strong>.</p>
+    {% endif %}
+    <a class="btn" href="{{ url_for('reception.index') }}">{{ ui.icon('arrow-left') }} Retour</a>
+  </div>
+</div>
+{% endblock %}

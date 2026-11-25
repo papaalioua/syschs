@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
+{% block title %}Infirmerie{% endblock %}
+{% block crumbs %}Infirmerie {{ ui.icon('chevron') }} <strong>Saisie des ordonnances</strong>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ ui.icon('clipboard', 'sm') }} Phase 2 · Infirmerie</div>
+    <h1>Infirmerie : saisie des ordonnances</h1>
+    <p>Scannez la chemise du patient (ou le dos de sa carte CNSS) pour ouvrir son dossier.</p>
+  </div>
+</div>
+
+{{ ui.journey('nurse') }}
+
+<div class="kpis">
+  {{ ui.kpi('users', waiting|length, 'Patients en attente', 'wait') }}
+  {{ ui.kpi('check', done_today, "Saisies effectuées aujourd'hui", 'done') }}
+  {{ ui.kpi('stethoscope', flow.ready, 'Transmis au médecin', 'ready') }}
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="hico">{{ ui.icon('scan') }}</span><h2>Scanner le dossier du patient</h2></div>
+  <div class="card-body">
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="barcode" class="sr-only">Code-barres de la chemise</label>
+      <div class="scan">
+        {{ ui.icon('scan') }}
+        <input type="text" id="barcode" name="barcode" autocomplete="off" autofocus required placeholder="ex. SCH00000001">
+        <button type="submit">Ouvrir le dossier {{ ui.icon('arrow-right') }}</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head"><span class="hico">{{ ui.icon('clock') }}</span><h2>Patients en attente ({{ waiting|length }})</h2><span class="sub">Ordre d'arrivée</span></div>
+  <div class="card-body flush">
+    {% if waiting %}
+    <ul class="queue">
+      {% for c in waiting %}
+      <li>
+        <span class="rank">{{ '%02d'|format(loop.index) }}</span>
+        <span class="avatar">{{ c.patient.full_name|initials }}</span>
+        <div class="grow"><b>{{ c.patient.full_name }}</b><small><span class="mono">{{ c.dossier.barcode }}</span> · arrivé {{ c.created_at|ago }}</small></div>
+        <span class="badge wait hide-sm">En attente</span>
+        <a class="btn sm" href="{{ url_for('nurse.consultation', consultation_id=c.id) }}">Ouvrir</a>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}{{ ui.empty('check', 'Personne en attente.', 'Les nouveaux patients apparaîtront ici dès leur inscription.') }}{% endif %}
+  </div>
+</div>
+{% endblock %}

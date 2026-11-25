@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
+{% block title %}Consultations{% endblock %}
+{% block crumbs %}Médecin {{ ui.icon('chevron') }} <strong>Consultations</strong>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ ui.icon('stethoscope', 'sm') }} Phase 2 · Consultation</div>
+    <h1>Bonjour, {{ current_user.full_name }}</h1>
+    <p>Patients préparés par l'infirmerie, dans l'ordre où ils sont prêts.</p>
+  </div>
+</div>
+
+{{ ui.journey('doctor') }}
+
+<div class="kpis">
+  {{ ui.kpi('users', waiting|length, 'Patients prêts', 'ready') }}
+  {{ ui.kpi('check', kpi.today, "Consultations clôturées aujourd'hui", 'done') }}
+  {{ ui.kpi('scissors', kpi.surgeries, 'Mes interventions à venir', 'wait') }}
+</div>
+
+<div class="grid-3">
+  <div class="card">
+    <div class="card-head"><span class="hico">{{ ui.icon('clock') }}</span><h2>Patients prêts à être reçus ({{ waiting|length }})</h2></div>
+    <div class="card-body flush">
+      {% if waiting %}
+      <ul class="queue">
+        {% for c in waiting %}
+        <li>
+          <span class="rank">{{ '%02d'|format(loop.index) }}</span>
+          <span class="avatar">{{ c.patient.full_name|initials }}</span>
+          <div class="grow"><b>{{ c.patient.full_name }}</b><small>Prêt {{ c.nurse_at|ago }} · {{ c.prescription_details|truncate(60) }}</small></div>
+          <a class="btn sm" href="{{ url_for('doctor.consultation', consultation_id=c.id) }}">Recevoir {{ ui.icon('arrow-right') }}</a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}{{ ui.empty('check', 'Aucun patient en attente.', "Les patients apparaissent ici dès que l'infirmier a saisi l'ordonnance.") }}{% endif %}
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span class="hico">{{ ui.icon('history') }}</span><h2>Mes dernières consultations</h2></div>
+    <div class="card-body flush">
+      {% if done %}
+      <ul class="queue">
+        {% for c in done %}
+        <li>
+          <span class="avatar">{{ c.patient.full_name|initials }}</span>
+          <div class="grow"><b>{{ c.patient.full_name }}</b><small>{{ c.closed_at|dt }} · {{ 'Chirurgie' if c.decision == 'chirurgie' else 'Médicaments' }}</small></div>
+          <a class="btn sm ghost" href="{{ url_for('doctor.summary', consultation_id=c.id) }}" title="Document patient">{{ ui.icon('file') }}<span class="sr-only">Document patient</span></a>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}{{ ui.empty('file', 'Aucune consultation clôturée.') }}{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

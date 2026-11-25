@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
+{% block title %}Inscription patient{% endblock %}
+{% block crumbs %}Réception {{ ui.icon('chevron') }} <strong>Inscription patient</strong>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ ui.icon('card', 'sm') }} Phase 1 · Accueil</div>
+    <h1>Réception : inscription d'un patient</h1>
+    <p>Scannez la carte CNSS : elle est validée en ligne avant toute ouverture de dossier.</p>
+  </div>
+  <div class="actions"><a class="btn secondary" href="{{ url_for('reception.search') }}">{{ ui.icon('search') }} Localiser un patient</a></div>
+</div>
+
+{{ ui.journey('reception') }}
+
+<div class="kpis">
+  {{ ui.kpi('user-plus', kpi.today, "Inscriptions aujourd'hui") }}
+  {{ ui.kpi('users', kpi.patients, 'Patients enregistrés', 'ready') }}
+  {{ ui.kpi('scissors', kpi.surgeries, 'Interventions à venir', 'wait') }}
+  {{ ui.kpi('bed', kpi.rooms_free, 'Chambres libres', 'done', '/ ' ~ kpi.rooms) }}
+</div>
+
+<div class="grid-3">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><span class="hico">{{ ui.icon('scan') }}</span><h2>1. Scanner la carte CNSS</h2><span class="sub">Étape 1 sur 3</span></div>
+      <div class="card-body">
+        <form method="post">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label for="cnss_number" class="sr-only">Numéro de la carte CNSS</label>
+          <div class="scan">
+            {{ ui.icon('scan') }}
+            <input type="text" id="cnss_number" name="cnss_number" inputmode="numeric" autocomplete="off" autofocus required placeholder="Numéro de la carte CNSS">
+            <button type="submit">{{ ui.icon('shield') }} Valider auprès de la CNSS</button>
+          </div>
+        </form>
+        {% if not config.CNSS_API_URL %}
+        <div class="quick"><span>Simulation CNSS : un numéro commençant par 1 est valide, par 0 la carte est expirée. Essayer :</span>
+          <button type="button" data-fill="1234567890">1234567890</button>
+          <button type="button" data-fill="0123456789">0123456789</button>
+          <button type="button" data-fill="9999999">9999999</button>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><span class="hico">{{ ui.icon('history') }}</span><h2>Dernières inscriptions</h2><span class="sub">{{ recent|length }} affichées</span></div>
+      <div class="card-body flush">
+        {% if recent %}
+        <div class="table-wrap"><table>
+          <thead><tr><th>Patient</th><th class="hide-sm">Dossier</th><th>Statut</th><th class="hide-sm">Arrivée</th><th></th></tr></thead>
+          <tbody>
+          {% for c in recent %}
+          <tr>
+            <td>{{ ui.person(c.patient.full_name, 'CNSS ' ~ c.patient.cnss_number) }}</td>
+            <td class="hide-sm mono">{{ c.dossier.barcode }}</td>
+            <td><span class="badge {{ c.status|status_class }}">{{ c.status|status_label }}</span></td>
+            <td class="hide-sm muted small nowrap">{{ c.created_at|ago }}</td>
+            <td class="right"><a class="btn sm secondary" href="{{ url_for('reception.labels', consultation_id=c.id) }}">{{ ui.icon('printer') }} Étiquettes</a></td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table></div>
+        {% else %}{{ ui.empty('users', 'Aucune inscription pour le moment', 'Scannez une carte CNSS pour commencer.') }}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><span class="hico">{{ ui.icon('calendar') }}</span><h2>Bloc opératoire</h2><span class="sub">Prochaines interventions</span></div>
+    <div class="card-body flush">
+      {% for s in upcoming %}
+      <div class="slot">
+        <div class="room"><small>CH.</small><b>{{ s.room.number }}</b></div>
+        <div class="grow"><b>{{ s.patient.full_name }}</b><small>{{ s.label }}</small><br><small class="mono">{{ s.start|dt }} → {{ s.end.strftime('%H:%M') }}</small></div>
+      </div>
+      {% else %}
+      {{ ui.empty('bed', 'Aucune intervention programmée') }}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  document.querySelectorAll('[data-fill]').forEach(function (b) {
+    b.addEventListener('click', function () { var i = document.getElementById('cnss_number'); i.value = b.dataset.fill; i.focus(); });
+  });
+</script>
+{% endblock %}

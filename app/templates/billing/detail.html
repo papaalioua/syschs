@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
+{% block title %}Facture {{ bill.id }}{% endblock %}
+{% block crumbs %}<a href="{{ url_for('billing.index') }}">Facturation CNSS</a> {{ ui.icon('chevron') }} <strong>Facture n°{{ bill.id }}</strong>{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">{{ ui.icon('receipt', 'sm') }} SysBill</div>
+    <h1>Facture n°{{ bill.id }}</h1>
+    <p>Période du {{ bill.period_start|dt }} au {{ bill.period_end|dt }}</p>
+  </div>
+  <div class="actions">
+    {% if bill.status != 'envoyee' %}
+    <form method="post" action="{{ url_for('billing.retry', bill_id=bill.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" style="margin:0">{{ ui.icon('send') }} Renvoyer à la CNSS</button>
+    </form>
+    {% endif %}
+    <button type="button" class="secondary" style="margin:0" onclick="window.print()">{{ ui.icon('printer') }} Imprimer</button>
+  </div>
+</div>
+
+<div class="kpis">
+  {{ ui.kpi('clipboard', bill.total_acts, 'Actes facturés') }}
+  {{ ui.kpi('wallet', bill.total_amount|money, 'Montant total', 'ready', 'TND') }}
+  <div class="kpi"><div class="kico {{ 'done' if bill.status == 'envoyee' else 'err' }}">{{ ui.icon('send' if bill.status == 'envoyee' else 'alert', 'lg') }}</div>
+    <div><div class="val" style="font-size:1.05rem"><span class="badge {{ 'ok' if bill.status == 'envoyee' else 'err' }}">{{ 'envoyée' if bill.status == 'envoyee' else bill.status }}</span></div>
+    <div class="lbl">{% if bill.cnss_reference %}Référence CNSS : <span class="mono">{{ bill.cnss_reference }}</span>{% else %}Non transmise{% endif %}</div></div></div>
+</div>
+
+<div class="grid-3">
+  <div class="card">
+    <div class="card-head"><span class="hico">{{ ui.icon('stethoscope') }}</span><h2>Rémunération des médecins</h2></div>
+    <div class="card-body flush">
+      {% set maxv = bill.lines|map(attribute='amount')|max if bill.lines else 1 %}
+      <div class="table-wrap"><table>
+        <thead><tr><th>Médecin</th><th class="right">Actes</th><th class="hide-sm" style="width:30%"></th><th class="right">Montant (TND)</th></tr></thead>
+        <tbody>
+        {% for l in bill.lines %}
+        <tr>
+          <td>{{ ui.person(l.doctor.full_name) }}</td>
+          <td class="right">{{ l.act_count }}</td>
+          <td class="hide-sm"><div class="bar"><i style="width: {{ (l.amount / maxv * 100)|round(1) if maxv else 0 }}%"></i></div></td>
+          <td class="right mono">{{ l.amount|money }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="total-row"><td>Total</td><td class="right">{{ bill.total_acts }}</td><td class="hide-sm"></td><td class="right mono">{{ bill.total_amount|money }}</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head"><span class="hico">{{ ui.icon('card') }}</span><h2>Numéros CNSS traités</h2></div>
+    <div class="card-body">
+      <div class="cnss-list">{% for n in bill.cnss_numbers.split(',') if n %}<span>{{ n }}</span>{% endfor %}</div>
+    </div>
+  </div>
+</div>
+<a class="btn secondary no-print" href="{{ url_for('billing.index') }}">{{ ui.icon('arrow-left') }} Retour</a>
+{% endblock %}

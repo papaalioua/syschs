@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% import "_ui.html" as ui with context %}
+{% block title %}Dossier {{ c.patient.full_name }}{% endblock %}
+{% block crumbs %}<a href="{{ url_for('nurse.index') }}">Infirmerie</a> {{ ui.icon('chevron') }} <strong>{{ c.patient.full_name }}</strong>{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="patient-banner">
+    <span class="avatar lg">{{ c.patient.full_name|initials }}</span>
+    <div>
+      <h1>Dossier de {{ c.patient.full_name }}</h1>
+      <div class="ids">
+        <span class="tag">{{ ui.icon('card') }} CNSS <span class="mono">{{ c.patient.cnss_number }}</span></span>
+        <span class="tag">{{ ui.icon('scan') }} <span class="mono">{{ c.dossier.barcode }}</span></span>
+        {% if c.patient.phone %}<span class="tag">{{ c.patient.phone }}</span>{% endif %}
+        {% if c.patient.address %}<span class="tag">{{ c.patient.address }}</span>{% endif %}
+      </div>
+    </div>
+    <div class="right"><span class="badge {{ c.status|status_class }}">{{ c.status|status_label }}</span></div>
+  </div>
+</div>
+
+{% if c.status == 'enregistre' %}
+<div class="card">
+  <div class="card-head"><span class="hico">{{ ui.icon('file') }}</span><h2>Ordonnance du médecin</h2></div>
+  <div class="card-body">
+    <p class="muted">Joignez l'ordonnance papier à la chemise, puis saisissez son contenu.</p>
+    <form method="post">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="prescription_details">Détails de l'ordonnance</label>
+      <textarea id="prescription_details" name="prescription_details" required autofocus placeholder="Examens, médicaments prescrits, posologie…">{{ request.form.get('prescription_details', '') }}</textarea>
+      <label for="nurse_notes">Notes de l'infirmier (constantes, observations)</label>
+      <textarea id="nurse_notes" name="nurse_notes" placeholder="TA, température, poids, observations…">{{ request.form.get('nurse_notes', '') }}</textarea>
+      <div class="actions">
+        <button type="submit">{{ ui.icon('send') }} Enregistrer et transmettre au médecin</button>
+        <a class="btn secondary" href="{{ url_for('nurse.index') }}">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body">
+    {{ ui.empty('check', 'Cette consultation a déjà été traitée.', 'Statut actuel : ' ~ (c.status|status_label)) }}
+    <div style="text-align:center"><a class="btn secondary" href="{{ url_for('nurse.index') }}">{{ ui.icon('arrow-left') }} Retour</a></div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
